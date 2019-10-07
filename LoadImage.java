@@ -25,6 +25,20 @@ public class LoadImage {
 
     }
 
+
+    public static BufferedImage getImagefromMatrix(int[][] matrix) {
+        int width = matrix.length;
+        int height =  matrix[0].length;
+        
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                bufferedImage.setRGB(i, j, matrix[i][j]);
+            }
+        }
+        return bufferedImage;
+    }
+
     public static void saveImageFromMatrix(int[][] matrix, String filename) {
         int width = matrix.length;
         int height =  matrix[0].length;
@@ -43,6 +57,19 @@ public class LoadImage {
             System.err.println("ERROR AL GRABAR");
             System.err.println(e);
         }
+    }
+
+    public static int[][] getMatrixOfImage(BufferedImage bufferedImage) {
+        int width = bufferedImage.getWidth(null);
+        int height = bufferedImage.getHeight(null);
+        int[][] pixels = new int[width][height];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                pixels[i][j] = bufferedImage.getRGB(i, j);
+            }
+        }
+    
+        return pixels;
     }
 
     public static int[][] getMatrixOfImage(String filename) {

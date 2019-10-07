@@ -3,17 +3,16 @@ package parcial;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-
-import redesOk.TCPServer50.OnMessageReceived;
+import java.nio.ByteBuffer;
 
 public class TCPClient {
     private String msg;
     public String server_ip;
     public static final int SERVERPORT = 12345;
     private OnMessageReceived msgListener = null;
-    private boolean running = false; //????
-    protected PrintWriter out;
-    protected BufferedReader in;
+    private boolean running = false;
+    protected OutputStream out;
+    protected InputStream in;
     
     public TCPClient(String ip, OnMessageReceived lstnr) {
         server_ip = ip;
@@ -45,14 +44,35 @@ public class TCPClient {
             Socket s = new Socket(serverAddr, SERVERPORT);
             
             try {
-                out = new PrintWriter(
-                    new BufferedWriter(new OutputStreamWriter(s.getOutputStream())),
-                    true
-                );
+                out = s.getOutputStream();
                 System.out.println(("Done"));
-                in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                in = s.getInputStream();
 
                 while (running) {
+
+                    byte[] insz = new byte[4];
+                    in.read(insz);
+                    int size = ByteBuffer.wrap(insz).asIntBuffer().get();
+                    byte[] imgReceived = new byte[size];
+                    in.read(imgReceived);
+                    BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgReceived));
+                    int[][] matrix = LoadImage.getMatrixOfImage(img);
+
+                    /**
+                     *
+                     * Here comes the convolution
+                     * 
+                     * */
+
+                    img = LoadImage.getImagefromMatrix(matrix);
+
+                    ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+                    ImageIO.write(img, "jpg", byteOut);
+                    byte[] sz = ByteBuffer.allocate(4).putInt(byteOut.size()).array();
+                    out.write(sz);
+                    out.write(byteOut.toByteArray());
+                    out.flush();
+
                     msg = in.readLine();
                     
                     if (msg != null && msgListener != null) {

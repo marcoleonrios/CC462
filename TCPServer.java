@@ -51,4 +51,8 @@ public class TCPServer {
         return msgListener;
     }
 
+    public interface OnMessageReceived {
+        public void messageReceived();
+    }
+
 }
