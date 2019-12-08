@@ -1,15 +1,17 @@
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.EOFException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.util.Scanner;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
 
 public class TCPClient extends Thread {
     public String server_ip;
-    public static final int SERVERPORT = 12345;
+    public static final int CLIENT_SERVERPORT = 12345;
     private boolean running = false;
     protected PrintWriter out;
     protected BufferedReader in;
@@ -43,18 +45,17 @@ public class TCPClient extends Thread {
         /**
          * Comunicates operations to the balancer
          * Examples:
-         * L-1992 ; 1039
-         * A-1012 ; 1110 ; 260 ; 579.80
+         * L ; 934
+         * A ; 110 ; 260 ; 579.80
          * Returns 0 if success and returns 1 if fails.
          */
         String[] cmd_list = cmd.split(";");
 
-        if (cmd_list.length > 4 || cmd_list.length < 2) {
+        if (cmd_list.length != 4 || cmd_list.length != 2) {
             System.err.println("Error: bad parameters.");
             return 1;
         } else {
-            String[] operation = cmd_list[1].split("-");
-            if (operation[0] != "A" || operation[0] != "B" || operation.length != 2) {
+            if (cmd_list[0] != "A" || cmd_list[0] != "L") {
                 System.err.println("Error: bad operation.");
                 return 1;
             } else {
@@ -74,11 +75,11 @@ public class TCPClient extends Thread {
         try {
             InetAddress serverAddr = InetAddress.getByName(server_ip);
             System.out.println("Connecting to " + server_ip);
-            Socket s = new Socket(serverAddr, SERVERPORT);
+            Socket s = new Socket(serverAddr, CLIENT_SERVERPORT);
             
             try {
                 out = new PrintWriter(
-                    new BufferedReader(
+                    new BufferedWriter(
                         new OutputStreamWriter(s.getOutputStream())
                     ),
                     true
@@ -91,14 +92,20 @@ public class TCPClient extends Thread {
                 System.out.println("Writer. Ready.");
 
                 while (running) {
-                    // TODO
+                    System.out.println("Insert your command: ");
                     String cmd = scanner.nextLine(); // command to make an operation.
                     int status = operate(cmd);
 
                     if (status == 1) {
                         System.out.println("Check your request and try again.");
+                    } else {
+                        String response = in.readLine();
+                        System.out.println("[Server]: " + response);
                     }
                 }
+                
+                running = false;
+                System.out.println("Bye!")
             } catch (EOFException eofe) {
                 System.err.println("Task-Queue empty.");
                 System.err.println("Proceding to close conection.");
@@ -108,6 +115,7 @@ public class TCPClient extends Thread {
                 System.err.println("Closing conection.");
             }
             finally {
+                running = false;
                 s.close();
             }
         } catch (Exception e) {

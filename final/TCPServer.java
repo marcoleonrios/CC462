@@ -1,7 +1,12 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Scanner;
+
 /*
 * This is gonna be the balancer class
 */
@@ -9,15 +14,20 @@ public class TCPServer {
     String loadPath;
     Queue<String> jobs;
 
-    protected static final int SERVERPORT = 12345;
+    protected static final int CLIENT_SERVERPORT = 12345;
+    protected static final int STORAGE_SERVERPORT = 23456;
     private boolean running = false;
-    ServerSocket ssocket;
-    private int count = 0;
 
+    ServerSocket client_ssocket;
+    ServerSocket pool_ssocket;
+
+    private int count = 0; // client counter 
+    private int nstorage; // number of storage nodes
+    String loadpath;
     private TCPServerThread[] client;
-    private TCPServerPool[] storage;
+    private TCPStoragePool[] storage;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         if (args.length == 3) {
             
         } else {
@@ -28,16 +38,35 @@ public class TCPServer {
         // magic comes here..
     }
 
-    TCPServer(int nclient, int nstorage) {
-        client = new TCPServerThread[nclient];
-        storage = new TCPServerPool[nstorage];
+    TCPServer(String ldpth, int nstrg) {
+        nstorage = nstrg;
+        loadPath = ldpth;
     }
 
     public int distributeInfo() {
         /**
          * Distributes the table among all nodes
+         * Status codes:
+         *   0. Success
+         *   1. Not success. File not found
          */
+
+        int chunk = 1000 / nstorage;
+        try {
+            Scanner fileScanner = new Scanner(new File(loadPath));
+            
+
+		} catch (FileNotFoundException e) {
+            System.err.println("File not found.");
+            return 1;
+        }
+        
         return 0;
+    }
+
+    public String send2Storage(String command) {
+        
+        return response;
     }
 
     public void run() {
@@ -45,30 +74,31 @@ public class TCPServer {
 
         try {
             try {
-                ssocket = new ServerSocket(SERVERPORT);
-                System.out.println("Waiting for node connections...");
+                /** look up for pool */
+                pool_ssocket = new ServerSocket(STORAGE_SERVERPORT);
 
-                int node = 0;
-
-                while (node != storage.length) { // Connecting nodes
-                    Socket node_socket = ssocket.accept();
-                    storage[node] = new TCPServerPool(/* Params */, node_socket);
-                    Thread t = new Thread(storage[node]);
-                    node++;
+                for (int i = 0; i < nstorage; i++) {
+                    Socket pool = pool_ssocket.accept();
+                    storage[i] = new TCPStoragePool(this, i);
+                    Thread t = new Thread(storage[i]);
                     t.start();
-                    System.out.println("Nodes connected: " + node);
                 }
+
+                distributeInfo();
+                
+                client_ssocket = new ServerSocket(CLIENT_SERVERPORT);
                 
                 System.out.println("Ready to accept client connections.");
 
                 while (running) {
-                    Socker clnt = ssocket.accept();
-                    client[count] = new TCPServerThread(/** params */, clnt);
+                    Socket clnt = client_ssocket.accept();
+                    client[count] = new TCPServerThread(clnt, this, count, storage);
                     count++;
                     Thread t = new Thread(client[count]);
                     t.start();
                     System.out.println("Clients connected: " + count);
                 }
+
                 running = false;
             } catch (Exception e) {
                 //TODO: handle exception
