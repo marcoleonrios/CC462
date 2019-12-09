@@ -58,7 +58,7 @@ public class TCPServerThread implements Runnable {
                 while (running) {
                     String command = in.readLine();
                     System.out.println("Request: " + command);
-                    String response = server.send2Storage(command);
+                    String response = server.processCommand(command);
                     out.write(response);
                 }
 
