@@ -22,10 +22,9 @@ public class TCPStoragePool implements Runnable {
      * Runs on server machine
      * 
      * 
-     */
+    */
     protected static final int STORAGE_SERVERPORT = 23456;
     private ServerSocket storage_socket; // handles Storage-Pool communication
-    private Socket server_socket; // handles Server-Pool communication.
     private LinkedList<Socket> storageconnections; // To communicate with storage
     private int poolID;
     private TCPServer server;
@@ -36,9 +35,10 @@ public class TCPStoragePool implements Runnable {
     private Queue<String> jobs;
     private Map<String, String> table;
 
-    public TCPStoragePool(TCPServer srvr, int id) {
+    public TCPStoragePool(TCPServer srvr, int id, ServerSocket ssocket) {
         server = srvr;
         poolID = id;
+        storage_socket = ssocket;
     }
 
     public int getID() {
@@ -69,20 +69,6 @@ public class TCPStoragePool implements Runnable {
 
         try {
             try {
-                storage_socket = new ServerSocket(STORAGE_SERVERPORT);
-                server_out = new PrintWriter(
-                    new BufferedWriter(
-                        new OutputStreamWriter(server_socket.getOutputStream())
-                    ),
-                    true
-                );
-                System.out.println("Printer. Ready");
-
-                server_in = new BufferedReader(
-                    new InputStreamReader(server_socket.getInputStream())
-                );
-                System.out.println("Reader. Ready.");
-
                 /** Look up for storage connections (Thread) */
                 Runnable runner = () -> {
                     Socket s;
@@ -102,7 +88,6 @@ public class TCPStoragePool implements Runnable {
 
                 while (running) {
                     /** Handle client requests */
-                    server_in.readLine(); // Reading a Request
 
                     /** Process the request... */
 
