@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Scanner;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -25,6 +26,7 @@ public class TCPClient extends Thread {
             instance.start();
         } else {
             System.err.println("Usage: java TCPClient <server_ip> <name>");
+            System.exit(1);
         }
     }
 
@@ -35,6 +37,26 @@ public class TCPClient extends Thread {
 
     public void stopClient() {
         running = false;
+    }
+
+    private String generateRequest() {
+        Random r = new Random();
+        String request;
+        if (r.nextFloat() < 0.8) {
+            request = "L;";
+            int account = (int)(r.nextFloat() * 900 + 100);
+            request = request + account;
+        } else {
+            request = "A;";
+            int orig_account = (int)(r.nextFloat() * 900 + 100);
+            request = request + orig_account +";";
+            int dest_account = (int) (r.nextFloat() * 900 + 100);
+            request = request + dest_account +";";
+            int transfer_ammount = (int)(r.nextFloat() * 90 + 10);
+            request = request + transfer_ammount +";";
+        }
+
+        return request;
     }
 
     public void run() {
@@ -60,18 +82,6 @@ public class TCPClient extends Thread {
                 );
                 System.out.println("Writer. Ready.");
                 /*
-                Runnable pinger = () -> {
-                    try {
-                        while (running) {
-                            String ping = "PING";
-                            out.println(response);
-                            out.flush();
-                        }
-                    } catch (Exception e) {
-                        System.err.println(e);
-                    }
-                };*/
-
                 Runnable read_handler = () -> { // This runnable handles reading
                     try {
                         while (running) {
@@ -84,19 +94,20 @@ public class TCPClient extends Thread {
                         System.err.println(ioe);
                         System.exit(1);
                     } catch (Exception e) {
-                        System.err.println("Error on TCPClient:");
+                        System.err.println("Error on TCPClient.read_handler");
                         System.err.println(e);
                     }
                 };
                 Thread read_handler_thread = new Thread(read_handler);
                 read_handler_thread.start();
-                
+                */
                 Runnable write_handler = () -> { // This runnable handles
                     while (running) {
                         try {
-                            String response = scanner.nextLine();
-                            response = name + ": " + response;
-                            out.println(response);
+                            //String response = scanner.nextLine();
+                            String response = generateRequest();
+                            System.out.println(response);
+                            out.println(response); // command
                             out.flush();
                         } catch (NoSuchElementException nsee) {
                             System.err.println("Closing connection");

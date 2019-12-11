@@ -1,5 +1,4 @@
 import java.io.*;
-import java.util.Scanner;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -49,41 +48,40 @@ public class TCPClientHandler implements Runnable {
                 ),
                 true
             );
-            System.out.println("Printer. Ready.");
+            System.out.println("[CH"+ clientID +"]:Printer. Ready.");
 
             in = new BufferedReader(
                 new InputStreamReader(client.getInputStream())
             );
-            System.out.println("Reader. Ready.");
+            System.out.println("[CH"+ clientID +"]:Reader. Ready.");
 
             read_handler = () -> {
-                    try {
-                        while (running) {
-                            String msg;
-                            if ((msg = in.readLine()) != null) {
-                                if (msg.equals("Disconnecting")) {
-                                    server.remove_client_handler(clientID);
-                                    running = false;
-                                } else {
-                                    System.out.println(msg);
-                                    server.client_broadcast(msg, clientID);
-                                }
-                            } else {
+                try {
+                    while (running) {
+                        String msg;
+                        if ((msg = in.readLine()) != null) {
+                            if (msg.equals("Disconnecting")) {
                                 server.remove_client_handler(clientID);
                                 running = false;
+                            } else {
+                                System.out.println(msg);
+                                msg = clientID +"-"+ msg;
+                                server.sendCommand(msg);
                             }
+                        } else {
+                            server.remove_client_handler(clientID);
+                            running = false;
                         }
-                    } catch (SocketException se) {
-                        System.err.println("Connection was reseted");
-                    } catch (IOException ioe) {
-                        System.err.println("Error on TCPClientHandler.read_handler");
-                        System.err.println(ioe);
-                    } catch (Exception e) {
-                        System.err.println("Error on TCPClient:");
-                        System.err.println(e);
-                    } finally {
-                        running = true;
                     }
+                } catch (SocketException se) {
+                    System.err.println("Connection was reseted");
+                } catch (IOException ioe) {
+                    System.err.println("Error on TCPClientHandler.read_handler");
+                    System.err.println(ioe);
+                } catch (Exception e) {
+                    System.err.println("Error on TCPClientHandler:");
+                    System.err.println(e);
+                }
             };
             
             Thread read_handler_thread = new Thread(read_handler);
