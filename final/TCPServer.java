@@ -29,6 +29,8 @@ public class TCPServer extends Thread {
     String filepath;
     TreeMap<Integer, Integer> table;
 
+    private LinkedList<Integer> sums = new LinkedList<>();
+
 
     public static void main(String[] args) {
         if (args.length == 3){
@@ -53,6 +55,21 @@ public class TCPServer extends Thread {
         for (int i = 0; i < nstorage; i++) {
             LinkedList<TCPStorageHandler> handler = new LinkedList<TCPStorageHandler>();
             storage_handler.add(handler);
+        }
+    }
+
+    protected void getTOTALSUM() {
+        for (LinkedList<TCPStorageHandler> l : storage_handler) {
+            l.getLast().sendMessage2Storage("0-S;~");
+        }
+    }
+
+    protected void pushPSUM(int p_sum) {
+        sums.add(p_sum);
+
+        if (sums.size() == nstorage) {
+            int total_sum = sums.stream().reduce(0, Integer::sum);
+            System.out.println("TOTALSUMIS: "+ total_sum);
         }
     }
 
@@ -153,6 +170,12 @@ public class TCPServer extends Thread {
 
         System.out.println("[Info]: Storage "+ id +" is down.");
         storage_count--;
+        if (storage_count == 0) {
+            System.err.println("System has fallen.");
+            System.err.println("Bye bye!");
+            running = false;
+            System.exit(1);
+        }
     }
 
     public void run() {
@@ -243,8 +266,9 @@ public class TCPServer extends Thread {
 
             while (running) {
                 String response = scanner.nextLine();
-                response = name + ": " + response;
-                client_broadcast(response, -1);
+                if (response.equals("S")) {
+                    getTOTALSUM();
+                }
             }
             
 

@@ -38,6 +38,13 @@ public class TCPStorage extends Thread {
         this.name = name;
     }
 
+    public int getTableSum() {
+        int sum;
+        sum = table.values().stream().reduce(0, Integer::sum);
+
+        return sum;
+    }
+
     public void run() {
         running = true;
 
@@ -67,10 +74,11 @@ public class TCPStorage extends Thread {
 
             Runnable read_handler = () -> {
                 try {
+                    int tmp_count = 0;
                     while (running) {
                         String msg;
                         if ((msg = in.readLine()) != null) {
-                            System.out.println(msg);
+                            //System.out.println(msg);
                             String[] cmd_list = msg.split(";");
                             String[] header = cmd_list[0].split("-");
                             String response;
@@ -79,14 +87,27 @@ public class TCPStorage extends Thread {
                                 int accountId = Integer.parseInt(cmd_list[1]);
                                 response = ""+ table.get(accountId);
                             } else {
-                                int orig_accountId = Integer.parseInt(cmd_list[1]);
-                                int transfer_ammount = Integer.parseInt(cmd_list[2]);
-                                int actual_orig_ammount = table.get(orig_accountId);
-                                table.put(orig_accountId, actual_orig_ammount - transfer_ammount);
-                                response = "Success.";
-                            }
+                                if (header[1].equals("A")) {
+                                    int orig_accountId = Integer.parseInt(cmd_list[1]);
+                                    int transfer_ammount = Integer.parseInt(cmd_list[2]);
+                                    int actual_orig_ammount = table.get(orig_accountId);
+                                    synchronized (table) {
+                                        table.replace(orig_accountId, actual_orig_ammount - transfer_ammount);
+                                    }
+                                    response = "Success.";
+                                } else {
+                                    response = "";
+                                }
 
-                            response = header[0] +";"+response;
+                                if (header[1].equals("S")) {
+                                    int sum = getTableSum();
+                                    response = ""+ sum + ";S";
+                                }
+                            }
+                            System.out.print("Modifying..."+ tmp_count +"\r");
+                            tmp_count++;
+                            System.out.flush();
+                            response = header[0] +";"+ response;
                             out.println(response);
                         }
                     }

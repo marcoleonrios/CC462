@@ -85,10 +85,15 @@ public class TCPStorageHandler implements Runnable {
                                 server.remove_storage_handler(storageID);
                                 running = false;
                             } else {
-                                System.out.println(msg);
+                                //System.out.println(msg);
                                 String[] msg_list = msg.split(";");
                                 int target_id = Integer.parseInt(msg_list[0]);
                                 server.send2ClientWithId(msg_list[1], target_id);
+                                String[] header = msg_list[0].split("-");
+                                if (msg_list.length == 3) {
+                                    int p_sum = Integer.parseInt(msg_list[1]);
+                                    server.pushPSUM(p_sum);
+                                }
                             }
                         } else {
                             server.remove_storage_handler(storageID);
@@ -98,10 +103,10 @@ public class TCPStorageHandler implements Runnable {
                 } catch (SocketException se) {
                     System.err.println("Connection was reseted");
                 } catch (IOException ioe) {
-                    System.err.println("Error on TCPClientHandler.read_handler");
+                    System.err.println("Error on TCPStorageHandler.read_handler");
                     System.err.println(ioe);
                 } catch (Exception e) {
-                    System.err.println("Error on TCPClient:");
+                    System.err.println("Error on TCPStorageHandler:");
                     System.err.println(e);
                 }
             };

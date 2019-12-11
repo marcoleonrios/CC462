@@ -64,7 +64,7 @@ public class TCPClientHandler implements Runnable {
                                 server.remove_client_handler(clientID);
                                 running = false;
                             } else {
-                                System.out.println(msg);
+                                //System.out.println(msg);
                                 msg = clientID +"-"+ msg;
                                 server.sendCommand(msg);
                             }
@@ -79,7 +79,8 @@ public class TCPClientHandler implements Runnable {
                     System.err.println("Error on TCPClientHandler.read_handler");
                     System.err.println(ioe);
                 } catch (Exception e) {
-                    System.err.println("Error on TCPClientHandler:");
+                    System.err.println("Error on TCPClientHandler.read_handler:");
+                    server.remove_client_handler(clientID);
                     System.err.println(e);
                 }
             };

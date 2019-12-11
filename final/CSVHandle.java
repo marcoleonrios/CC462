@@ -60,15 +60,14 @@ class CSVHandle {
         int total_sz = mymap.size();
         int chunk_ceil = (int) Math.ceil((float) total_sz / nnodes);
         int chunk_floor = (int) Math.floor((float) total_sz / nnodes);
-
+        
         for (int i = 0, j = 1; i < 1000; i = i + chunk_ceil, j++) {
-            System.out.println("i: "+ i);
             if (j != nnodes){
                 TreeMap<Integer, Integer> tmp_map = new TreeMap<>(mymap.subMap(i, i + chunk_ceil));
                 splitted.add(tmp_map);
             }
             else {
-                TreeMap<Integer, Integer> tmp_map = new TreeMap<>(mymap.subMap(i, i + chunk_floor));
+                TreeMap<Integer, Integer> tmp_map = new TreeMap<>(mymap.subMap(i, i + chunk_floor + 1));
                 splitted.add(tmp_map);
             }
 

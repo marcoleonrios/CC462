@@ -102,13 +102,16 @@ public class TCPClient extends Thread {
                 read_handler_thread.start();
                 */
                 Runnable write_handler = () -> { // This runnable handles
+                    int tmp_count = 0;
                     while (running) {
                         try {
                             //String response = scanner.nextLine();
                             String response = generateRequest();
-                            System.out.println(response);
+                            //System.out.println(response);
                             out.println(response); // command
                             out.flush();
+                            System.out.print("Number of requests: "+ tmp_count + "\r");
+                            tmp_count++;
                         } catch (NoSuchElementException nsee) {
                             System.err.println("Closing connection");
                             scanner.close();
